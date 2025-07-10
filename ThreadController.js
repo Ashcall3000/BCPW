@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @description  Creates and Controls Threads
 // @author       Ashcall3000
-// @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/Searcher.js
+// @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/CookieController.js
 // @match        https://butteco-test-av.accela.com/*
 // @grant        none
 // ==/UserScript==
