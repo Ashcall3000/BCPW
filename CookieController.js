@@ -81,11 +81,24 @@ class CookieController {
     
     // Check Function
     // Checks to see if cookies exists and returns true or false
-    Check(cname) {
+    Check(cname, cvalue="") {
         this.allCookiesNames.forEach(function(cookName) {
-            if (cname == cookName)
+            if (cname == cookName && cvalue == "")
+                return true;
+            else if (cname == cookName && this.Get(cname) == cvalue)
                 return true;
         });
+        return false;
+    }
+    
+    // Check Include Function
+    // Checks to see if the data includes a the given value
+    CheckInclude(cname, cvalue) {
+        if (this.Check(cname)) {
+            let data = this.Get(cname);
+            if (Array.isArray(data) || typeof(data) == 'string')
+                return data.includes(cvalue);
+        }
         return false;
     }
     
@@ -147,8 +160,15 @@ class CookieController {
             }
         }
     }
-}
-
-function clearClicker() {
-    clearInterval(clicker);
+    
+    // RemoveAll Function
+    // Removes all cookies from the list.
+    RemoveAll() {
+        this.allCookiesNames.forEach(function(cname) {
+            this.Update(cname, "", -1);
+        });
+        this.Update(this.myName, "", -1);
+        this.allCookiesNames = [];
+        this.loadedCookie = [];
+    }
 }
