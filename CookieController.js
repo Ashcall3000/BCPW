@@ -1,174 +1,102 @@
-class CookieController {
-    // Constructor
-    constructor(cookieName) {
-        // Main Variables
-        this.allCookiesNames = this._LoadCookie(cookieName);
-        if (this.allCookiesNames == null)
-            this.allCookiesNames = [];
-        this.myName = cookieName;
-        this.loadedCookie = [];
+class CookieManager {
+    /**
+     * Sets a cookie with a given name and value.
+     * The value can be any type that can be serialized by JSON.stringify.
+     * @param {string} name - The name of the cookie.
+     * @param {any} value - The value of the cookie.
+     * @param {object} [options] - Optional settings.
+     * @param {number} [options.days=7] - Expiration in days.
+     * @param {string} [options.path='/'] - The path for the cookie.
+     * @param {string} [options.domain] - The domain for the cookie.
+     * @param {boolean} [options.secure] - Secure flag.
+     */
+    static set(name, value, options = {}) {
+        const { days = 7, path = '/', domain, secure } = options;
+
+        let expires = '';
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = `; expires=${date.toUTCString()}`;
+        }
+
+        const encodedValue = encodeURIComponent(JSON.stringify(value));
+        
+        let cookieString = `${name}=${encodedValue}${expires}; path=${path}`;
+        if (domain) {
+            cookieString += `; domain=${domain}`;
+        }
+        if (secure) {
+            cookieString += `; secure`;
+        }
+
+        document.cookie = cookieString;
     }
-    
-    // Load Function
-    // Private function that loads the JSON object and returns the value
-    _LoadCookie(cname) {
-        cname += "=";
-        let decodedCookie = decodeURIComponent(document.cookie);
-        let ca = decodedCookie.split(';');
+
+    /**
+     * Gets the value of a cookie by its name.
+     * It automatically deserializes the JSON string back into its original type.
+     * @param {string} name - The name of the cookie.
+     * @returns {any | null} The cookie value, or null if not found.
+     */
+    static get(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
         for (let i = 0; i < ca.length; i++) {
-            if (ca[i].includes(cname)) {
-                let c = ca[i].trim();
+            let c = ca[i];
+            while (c.charAt(0) === ' ') {
+                c = c.substring(1, c.length);
+            }
+            if (c.indexOf(nameEQ) === 0) {
+                const value = c.substring(nameEQ.length, c.length);
                 try {
-                    let myData = JSON.parse(decodeURIComponent(c.substring(cname.length, c.length)).toString());
-                    //console.log(myData);
-                    if (myData.myCookieType == 'JSON') {
-                        return myData;
-                    } else if (myData.myCookieType == 'number') {
-                        return Number(myData.myCookieData);
-                    } else if (myData.myCookieType == 'boolean') {
-                        return Boolean(myData.myCookieData);
-                    } else if (myData.myCookieType == 'array') {
-                        let myArray = [];
-                        for (let x = 0; x < myData.myCookieData.length; x++) {
-                            if (myData.myCookieDataType == 'number') {
-                                myArray.push(Number(myData.myCookieData[x]));
-                            } else if (myData.myCookieDataType == 'boolean') {
-                                myArray.push(Boolean(myData.myCookieData[x]));
-                            } else {
-                                myArray.push(myData.myCookieData[x]);
-                            }
-                        }
-                        return myArray;
-                    } else {
-                        return myData.myCookieData;
-                    }
+                    return JSON.parse(decodeURIComponent(value));
                 } catch (e) {
-                    console.log(e);
-                    return null;
+                    // If parsing fails, return the raw value
+                    return decodeURIComponent(value);
                 }
             }
         }
         return null;
     }
-    
-    // Save Function
-    // Private function that saves a JSON object as a cookie
-    _SaveCookie(cname, cvalue, exdays=1) {
-        let vType = typeof(cvalue);
-        let data = {};
-        if (vType == 'object') {
-            if (Array.isArray(cvalue)) {
-                // Is an Array
-                data.myCookieType = 'array';
-                data.myCookieData = cvalue;
-                data.myCookieDataType = typeof(cvalue[0]);
-            } else {
-                // JSON Object
-                data = cvalue;
-                data.myCookieType = 'JSON';
-            }
-        } else {
-            // Regular Cookie
-            data.myCookieType = vType;
-            data.myCookieData = cvalue;
-        }
-        const d = new Date();
-        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-        let expires = "expires=" + d.toUTCString();
-        let encodedvalue = encodeURIComponent(JSON.stringify(data));
-        document.cookie = cname + "=" + encodedvalue + ";" + expires + "; path=/";
+
+    /**
+     * Removes a cookie by its name.
+     * @param {string} name - The name of the cookie to remove.
+     * @param {object} [options] - Optional settings matching the original cookie path/domain.
+     * @param {string} [options.path='/'] - The path for the cookie.
+     * @param {string} [options.domain] - The domain for the cookie.
+     */
+    static remove(name, options = {}) {
+        // To delete a cookie, we set its expiration date to the past.
+        this.set(name, '', { ...options, days: -1 });
     }
-    
-    // Check Function
-    // Checks to see if cookies exists and returns true or false
-    Check(cname, cvalue="") {
-        this.allCookiesNames.forEach(function(cookName) {
-            if (cname == cookName && cvalue == "")
-                return true;
-            else if (cname == cookName && this.Get(cname) == cvalue)
-                return true;
-        });
-        return false;
+
+    /**
+     * Checks if a cookie with the given name exists.
+     * @param {string} name - The name of the cookie.
+     * @returns {boolean} True if the cookie exists, false otherwise.
+     */
+    static has(name) {
+        return this.get(name) !== null;
     }
-    
-    // Check Include Function
-    // Checks to see if the data includes a the given value
-    CheckInclude(cname, cvalue) {
-        if (this.Check(cname)) {
-            let data = this.Get(cname);
-            if (Array.isArray(data) || typeof(data) == 'string')
-                return data.includes(cvalue);
-        }
-        return false;
-    }
-    
-    // Add Function
-    // Adds cookie to Cookie Name list if it doesn't exist.
-    // Adds to loadedCookie as well.
-    // Saves Cookie for future use. 
-    Add(cname, cvalue, exdays=1) {
-        if (!this.Check(cname)) {
-            this.allCookiesNames.push(cname);
-            this._SaveCookie(this.myName, this.allCookiesNames);
-            this.loadedCookie[cname] = cvalue;
-        }
-        this._SaveCookie(cname, cvalue, exdays);
-    }
-    
-    // Update Function
-    // Updates data that already exists. If cookie doesn't exists returns false.
-    Update(cname, cvalue, exdays=1) {
-        if (this.Check(cname)) {
-            this.loadedCookie[cname] = cvalue;
-            this._SaveCookie(cname, cvalue, exdays);
-            return true;
-        }
-        return false;
-    }
-    
-    // Get Function
-    // Grabs and returns the value of a cookie. 
-    // If the cookie doesn't exist will return null.
-    Get(cname) {
-        if (this.Check(cname)) {
-            if (cname in this.loadedCookie) {
-                return this.loadedCookie[cname];
-            } else {
-                this.loadedCookie[cname] = this._LoadCookie(cname);
-                return this.loadedCookie[cname];
-            }
-        }
-        return null;
-    }
-    
-    // Remove Function
-    // Removes Cookie from the lists and loaded section.
-    // Removes specific index from array
-    Remove(cname, arrayIndex=-1) {
-        if (this.Check(cname)) {
-            if (arrayIndex == -1) {
-                let index = this.allCookiesNames.indexOf(cname);
-                if (index >= 0 && index < this.allCookiesNames.length) {
-                    this.Add(cname, "", -1);
-                    this.allCookiesNames = this.allCookiesNames.splice(index, 1);
-                    this.loadedCookie = this.loadedCookie.splice(index, 1);
-                }
-            } else if (Array.isArray(this.loadedCookie[cname])) {
-                if (arrayIndex >= 0 && arrayIndex < this.loadedCookie.length) {
-                    this.Update(cname, this.loadedCookie[cname].splice(arrayIndex, 1));
+
+    /**
+     * Returns an array of all cookie names.
+     * @returns {string[]} An array of cookie names.
+     */
+    static keys() {
+        const keys = [];
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            const cookiePair = ca[i].split('=');
+            if (cookiePair.length > 0) {
+                const key = cookiePair[0].trim();
+                if (key) {
+                    keys.push(key);
                 }
             }
         }
-    }
-    
-    // RemoveAll Function
-    // Removes all cookies from the list.
-    RemoveAll() {
-        this.allCookiesNames.forEach(function(cname) {
-            this.Update(cname, "", -1);
-        });
-        this.Update(this.myName, "", -1);
-        this.allCookiesNames = [];
-        this.loadedCookie = [];
+        return keys;
     }
 }
