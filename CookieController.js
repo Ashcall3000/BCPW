@@ -1,4 +1,34 @@
-class CookieManager {
+class CookieController {
+    /**
+     * Creates a cookie manager to handle just the cookies
+     * it's made. 
+     * @param {string} controllerName - Name of this cookie controller
+     */
+    constructor(controllerName) {
+        if (!controllerName)
+            throw new Error("CookieController require a unique name.");
+        
+        this.cookieName = "CookieController-" + controllerName;
+        this.cookies = [];
+        this._load();
+    }
+    
+    /**
+     * Loads the list of Cookies that this controller is 
+     * responsible for.
+     */
+    _load() {
+        this.cookies = this._get(this.cookieName + "-List");
+    }
+    
+    /**
+     * Saves the list of cookie names that this controller
+     * is responsible for.
+     */
+    _save() {
+        this._set(this.cookieName + "-List", this.cookies);
+    }
+    
     /**
      * Sets a cookie with a given name and value.
      * The value can be any type that can be serialized by JSON.stringify.
@@ -10,7 +40,7 @@ class CookieManager {
      * @param {string} [options.domain] - The domain for the cookie.
      * @param {boolean} [options.secure] - Secure flag.
      */
-    static set(name, value, options = {}) {
+    static _set(name, value, options = {}) {
         const { days = 7, path = '/', domain, secure } = options;
 
         let expires = '';
@@ -32,6 +62,25 @@ class CookieManager {
 
         document.cookie = cookieString;
     }
+    
+    /**
+     * Adds a cookie with a given name and value.
+     * The value can be any type that can be serialized by JSON.stringify.
+     * @param {string} name - The name of the cookie.
+     * @param {any} value - The value of the cookie.
+     * @param {object} [options] - Optional settings.
+     * @param {number} [options.days=7] - Expiration in days.
+     * @param {string} [options.path='/'] - The path for the cookie.
+     * @param {string} [options.domain] - The domain for the cookie.
+     * @param {boolean} [options.secure] - Secure flag.
+     */
+    add(name, value, options = {}) {
+        if (!this.cookies.includes(name)) {
+            this.cookies.push(name);
+            this._save();
+        }
+        this._set(name, value, options);
+    }
 
     /**
      * Gets the value of a cookie by its name.
@@ -39,7 +88,7 @@ class CookieManager {
      * @param {string} name - The name of the cookie.
      * @returns {any | null} The cookie value, or null if not found.
      */
-    static get(name) {
+    get(name) {
         const nameEQ = name + "=";
         const ca = document.cookie.split(';');
         for (let i = 0; i < ca.length; i++) {
@@ -67,9 +116,25 @@ class CookieManager {
      * @param {string} [options.path='/'] - The path for the cookie.
      * @param {string} [options.domain] - The domain for the cookie.
      */
-    static remove(name, options = {}) {
-        // To delete a cookie, we set its expiration date to the past.
-        this.set(name, '', { ...options, days: -1 });
+    remove(name, options = {}) {
+        if (this.cookies.includes(name)) {
+            // To delete a cookie, we set its expiration date to the past.
+            this._set(name, '', { ...options, days: -1 });
+            let index = this.cookies.findIndex(name);
+            this.cookies.splice(index, 1);
+            this._save();
+        }
+    }
+    
+    /**
+     * Resets and clears all cookies
+     */
+    reset() {
+        for (let i = 0; i < this.cookies.length; i++) {
+            this._set(this.cookies[i], '', { ...options, days: -1 });
+        }
+        this.cookies = [];
+        this._save();
     }
 
     /**
@@ -77,26 +142,15 @@ class CookieManager {
      * @param {string} name - The name of the cookie.
      * @returns {boolean} True if the cookie exists, false otherwise.
      */
-    static has(name) {
-        return this.get(name) !== null;
+    has(name) {
+        return this.cookies.includes(name);
     }
 
     /**
      * Returns an array of all cookie names.
      * @returns {string[]} An array of cookie names.
      */
-    static keys() {
-        const keys = [];
-        const ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-            const cookiePair = ca[i].split('=');
-            if (cookiePair.length > 0) {
-                const key = cookiePair[0].trim();
-                if (key) {
-                    keys.push(key);
-                }
-            }
-        }
-        return keys;
+    keys() {
+        return this.cookies;
     }
 }
