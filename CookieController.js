@@ -1,3 +1,12 @@
+// ==UserScript==
+// @name         Cookie Controller
+// @namespace    http://tampermonkey.net/
+// @version      1.0.0
+// @description  Creates and Controls Cookies
+// @author       Ashcall3000
+// @match        https://butteco-test-av.accela.com/*
+// @grant        none
+// ==/UserScript==
 class CookieController {
     /**
      * Creates a cookie manager to handle just the cookies
@@ -18,7 +27,7 @@ class CookieController {
      * responsible for.
      */
     _load() {
-        this.cookies = this._get(this.cookieName + "-List");
+        this.cookies = this.get(this.cookieName + "-List");
     }
     
     /**
