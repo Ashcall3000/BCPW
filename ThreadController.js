@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Thread Controller
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
+// @version      2.0.1
 // @description  Creates and Controls Threads
 // @author       Ashcall3000
 // @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/Searcher.js
@@ -21,10 +21,11 @@ class ThreadController {
         
         // Main Variables
         this.cookieName = "ThreadController-" + threadName;
+        this.Cookies = new CookieController(this.cookieName);
         this.myName = threadName;
         this.threadList = [];               // Threads
         this.threadNames = [];              // Names of Single Threads
-        const state = CookieManager.get(this.cookieName) || { currentStep: 0, active: false };
+        const state = this.Cookies.get(`${this.cookieName}-State`) || { currentStep: 0, active: false };
         this.tableThread = null;            // Table Thread
         this.tableList = [];                // Table of Steps in a single thread
         this.tableConditions = [];          // Conditions to run the table function
@@ -42,7 +43,7 @@ class ThreadController {
             currentStep: this.tableStep,
             active: this.active
         };
-        CookieManager.set(this.cookieName, state, { days: 1});
+        this.Cookies.add(`${this.cookieName}-State`, state, { days: 1});
     }
     
     /**
