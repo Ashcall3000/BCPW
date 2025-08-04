@@ -90,6 +90,37 @@ class CookieController {
         }
         this._set(name, value, options);
     }
+    
+    /**
+     * Modifies an existing cookie with the given value.
+     * operator can be +=, -=, *=, /= and does that operation between
+     * the current cookie data and the given value.
+     * @param {string} name - The name of the cookie
+     * @param {string} operator - operator to use on the cookie.
+     * @param {any} value - the value you wish to modify the cookie with.
+     * @param {object} [options] - Optional settings.
+     * @param {number} [options.days=7] - Expiration in days.
+     * @param {string} [options.path='/'] - The path for the cookie.
+     * @param {string} [options.domain] - The domain for the cookie.
+     * @param {boolean} [options.secure] - Secure flag.
+     */
+    modify(name, operator, value, options = {}) {
+        if (this.cookies.includes(name)) {
+            let data = this.get(name);
+            if (operator == '+=') {
+                data += value;
+            } else if (operator == '-=') {
+                data -= value;
+            } else if (operator == '*=') {
+                data *= value;
+            } else if (operator == '/=') {
+                data /= value;
+            }
+            this._set(name, data, options);
+            return data;
+        }
+        return false;
+    }
 
     /**
      * Gets the value of a cookie by its name.
