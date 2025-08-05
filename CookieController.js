@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cookie Controller
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Creates and Controls Cookies
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
@@ -18,8 +18,9 @@ class CookieController {
             throw new Error("CookieController require a unique name.");
         
         this.cookieName = "CookieController-" + controllerName;
-        this.cookies = [];
         this._load();
+        if (this.cookies == null)
+            this.cookies = [];
     }
     
     /**
@@ -49,7 +50,7 @@ class CookieController {
      * @param {string} [options.domain] - The domain for the cookie.
      * @param {boolean} [options.secure] - Secure flag.
      */
-    static _set(name, value, options = {}) {
+    _set(name, value, options = {}) {
         const { days = 7, path = '/', domain, secure } = options;
 
         let expires = '';
@@ -198,5 +199,22 @@ class CookieController {
      */
     keys() {
         return this.cookies;
+    }
+    
+    /**
+     * Returns a string version of the JSON Object cookie.
+     * If the param is blank will return all cookies as a string.
+     * @param {string} name - name of cookie. DEFAULT: ''
+     * @return {string} string version of cookie/s
+     */
+    stringify(name='') {
+        let text = '';
+        if (name != '' && this.has(name)) {
+            return name + ' = ' + this.get(name).toString();
+        }
+        for (let i = 0; i < this.cookies.length; i++) {
+            text += this.cookies[i] + ' = ' + this.get(this.cookies[i]).toString() + '\n';
+        }
+        return text;
     }
 }
