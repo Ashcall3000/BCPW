@@ -118,6 +118,12 @@ class CookieController {
             }
             this._set(name, data, options);
             return data;
+        } else {
+            if (operator == '+=') {
+                this.add(name, value, options);
+            } else if (operator == '-=') {
+                this.add(name, -value, options);
+            }
         }
         return false;
     }
