@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PW-CustomFee
 // @namespace    http://tampermonkey.net/
-// @version      0.0.1
+// @version      0.0.2
 // @description  Used for Accela to show Fee Unit costs per quantity amount
 // @author       Christopher Sullivan
 // @match        https://butteco-test-av.accela.com/*
@@ -19,7 +19,11 @@
     var Threads = new ThreadController("CustomFees");
     
     Threads.add('inner-window', function() {
-        if (!exists('input', {id:'fee-*'})) {
+        let inner = exists('#iframe-page-container');
+        if (inner) {
+            Threads.remove('inner-window');
+        }
+        if (!inner && !exists('input', {id:'fee-*'})) {
             let feeRows = search('tr', {element:'#AccelaMainTable', id:'row*', all:true});
             for (let i = 0; i < feeRows.length; i++) {
                 let td = search('td', {element:feeRows[i], all:true})[3];
