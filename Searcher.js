@@ -1,509 +1,332 @@
-/**
- * find
- * function to find an element by Css selector, if element is given
- * then will search within that element for element with the css selector.
- *
- * @param css - String that's a css selector
- * @param element - Element object from document
- * @return Element Object
- */
-function find(css, element=false) {
-    if (element !== false) {
-        if (typeof element == 'string') {
-            element = find(element);
-        }
-        return element.querySelector(css);
-    } else {
-        return document.querySelector(css);
-    }
-}
-
-function findInFrame(frame, css) {
-    return frame.contentWindow.document.querySelector(css);
-}
-
-function findAllInFrame(frame, css) {
-    return frame.contentWindow.document.querySelectorAll(css);
-}
+// ==UserScript==
+// @name         Searcher
+// @namespace    http://tampermonkey.net/
+// @version      1.0.0
+// @description  Facilitates Searches of the HTML Document
+// @author       Ashcall3000
+// @match        https://butteco-test-av.accela.com/*
+// @grant        none
+// ==/UserScript==
 
 /**
- * findAll
- * function to find elements by css selector, if element is given
- * then will search within that element for element with the css selector.
- *
- * @param css - String that's a css selector
- * @param element - Element obect from document
- * @return Element Object Array
+ * Does an include check on given text using a given pattern.
+ * Uses Regex so you can search 'H*llo' in 'Hello World' and it will
+ * return true.
+ * @param {string} text - String to be searched.
+ * @param {string} pattern - Pattern / string to search for.
+ * @return {bool} - Wether given text includes given pattern.
  */
-function findAll(css, element=false) {
-    if (element !== false) {
-        if (typeof element == 'string') {
-            element = find(element);
-        }
-        return element.querySelectorAll(css);
-    } else {
-        return document.querySelectorAll(css);
-    }
-}
+const wildcardIncludes = (text, pattern) => {
+    let escapedPattern = pattern.replace(/([.+?^=!:${}()|[\]/\\])/g, "\\$1");
+    let regexPattern = escapedPattern.replace(/\*/g, ".*").replace(/\?/g, ".");
+    let regex = new RegExp(regexPattern);
+    return regex.test(text);
+};
 
 /**
- * findByText
- * function to find element by css selector and then finds which element
- * that contains the given text. Will search within an element object if given.
- *
- * @param css - String CSS selector
- * @param text - String text to find in element
- * @param element - Element object to search in
- * @return Element Object
+ * Checks to see if the current url contains the given url text.
+ * Can use wildcards.
+ * @param {string} url - url text to search with.
+ * @return {bool} - true if url text is contained in the current documents url.
  */
-function findByText(css, text, element=false) {
-    var els = findAll(css, element);
-    for (var i = 0; i < els.length; i++) {
-        if (els[i].innerText != "" && els[i].innerText.includes(text)) {
-            return els[i];
-        }
-    }
-}
+const checkURL = (url) => {
+    return wildcardIncludes(document.location.href, url);
+};
 
 /**
- * findAllByText
- * function to find elements by  css selector and then finds which elemnts
- * that contains the given text. Will search within an element if given.
- *
- * @param css - String CSS selector
- * @param text - String text to find in element
- * @param element - Element object to search in
- * @return Element Object Array
+ * Searhes the HTML Document to check if an element exists.
+ * @param {string} css - css selector.
+ * @param {object} [options] - Optional settings to filter the results.
+ * @param {string | HTMLElement} [options.element] - The parent element to search within.
+ * @param {string} [options.text] - Wildcard-enabled text to find within the elements.
+ * @param {string} [options.attr] - The name of an attribute to check.
+ * @param {string} [options.value] - Wildcard-enabled value for the attribute.
+ * @param {boolean} [options.all] - Whether to return all matches or just the first.
+ * @param {bool} - true if found.
  */
-function findAllByText(css, text, element=false) {
-    var els = findAll(css, element);
-    var list = [];
-    for (var i = 0; i < els.length; i++) {
-        if (els[i].innerText != "" && els[i].innerText.includes(text)) {
-            list.push(els[i]);
-        }
-    }
-    return list;
-}
-
-/**
- * findSibling
- * function to find the next sibling of element found either using a css selector
- * or css selector that contains text. Will find the next Sibling using css_sib as
- * a css selector. Will search within an element if given.
- *
- * @param css - String CSS Selector
- * @param css_sib - String CSS Selector of Next Sibling
- * @param text - String to find in non-sibling element
- * @param element - Element Object to search in
- * @return Element Object
- */
-function findSibling(css, css_sib, text="", element=false) {
-    var el;
-    if (text !== "") {
-        el = findByText(css, text, element);
-    } else {
-        el = find(css, element);
-    }
-    var els = findAll(css_sib, el.parentNode);
-    if (els.length > 1) {
-        for (var i = 0; i < els.length; i++) {
-            if (els[i] != el) {
-                return els[i];
-            }
-        }
-    } else {
-        return els[0];
-    }
-}
-
-/**
- * findByAttribute
- * Function that finds an element based upon its attribute and the value of
- * that attribute. Can narrow down the search using text within the element, or
- * by finding the next sibling of an element.
- *
- * @param css - String CSS Selector
- * @param attribute - String the title of the attribute
- * @param value - String the text value of the attribute
- * @param css_sib - String CSS Selector of Next Sibling
- * @param text - String to find in non-sibling element
- * @param element - Element Object to search in
- * @return Element Object
- */
-function findByAttribute(css, attribute, value, css_sib="", text="", element=false) {
-    var els = [];
-    if (css_sib !== "") {
-        els.push(findSibling(css, css_sib, text, element));
-    } else if (text !== "") {
-        els = findAllByText(css, text, element);
-    } else {
-        els = findAll(css, element);
-    }
-    for (var i = 0; i < els.length; i++) {
-        if (els[i].getAttribute(attribute) == value) {
-            return els[i];
-        }
-    }
-    return false;
-}
-
-/**
- * findAllByAttribute
- * Function that finds all elements based upon its attribute and the value of
- * that attribute. Can narrow down the search using text within the element, or
- * by finding the next sibling of an element.
- * @param css - String CSS Selector
- * @param attribute - String the title of the attribute
- * @param value - String the text value of the attribute
- * @param css_sib - String CSS Selector of Next Sibling
- * @param text - String to find in non-sibling element
- * @param element - Element Object to search in
- * @return Element Object
- */
-function findAllByAttribute(css, attribute, value, css_sib="", text="", element=false) {
-    var els = [];
-    if (css_sib !== "") {
-        els.push(findSibling(css, css_sib, text, element));
-    } else if (text !== "") {
-        els = findAllByText(css, text, element);
-    } else {
-        els = findAll(css, element);
-    }
-    let foundEls = [];
-    for (var i = 0; i < els.length; i++) {
-        if (els[i].getAttribute(attribute) == value) {
-            foundEls.push(els[i]);
-        }
-    }
-    return foundEls;
-}
-
-/**
- * removeElement
- * function that finds element and then removes the element from the DOM.
- *
- * @param css
- * @param text
- * @param css_sib
- * @param element
- */
-function remove(css, text="", css_sib="", element=false) {
-    var el;
-    if (typeof(css) == "string") {
-        if (css_sib !== "") {
-            el = findSibling(css, css_sib, text, element);
-        } else if (text !== "") {
-            el = findByText(css, text, element);
-        } else {
-            el = find(css, element);
-        }
-    } else {
-        el = css;
-    }
-    el.parentNode.removeChild(el);
-}
-
-/**
- * check - checks to see if an dom object exists while using
- * a css selector to find it.
- *
- * @param css - String
- * @param element - Element Object from document
- * @return boolean
- */
-function checkExist(css, element=false) {
-    if (element === false) {
-        if (document.querySelector(css)) {
-            return true;
-        }
-        return false;
-    } else if (typeof element == 'string') {
-        if (document.querySelector(css) && document.querySelector(element)) {
-            if (findAll(css, element).length > 0) {
-                return true;
-            }
-            return false;
-        }
-    } else if (element != null && element.querySelector(css)) {
+const exists = (css, options = {}) => {
+    if (typeof css == 'string') {
+        return search(css, options) ? true : false;
+    } else if (css) {
         return true;
     }
     return false;
-}
-
-function checkExistInFrame(frame, css) {
-    if (findAllInFrame(frame, css).length > 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-function findPreviousTag(tag, element) {
-    if (element.parentNode.tagName == tag.toUpperCase()) {
-        return element.parentNode;
-    }
-    return findPreviousTag(tag, element.parentNode);
-}
+};
 
 /**
- * checkURL
- * function that checks to see if the given url is in the page url.
- *
- * @param url - String
- * @return Boolean
+ * Searches the HTML DOM for the css selector and you can use options to help narrow
+ * down the options and returns that element.
+ * @param {string} css - css selector.
+ * @param {object} [options] - Optional settings to filter the results.
+ * @param {string} [options.id] - Wildcard-enabled text to find id that matches element id.
+ * @param {string} [options.eclass] - Wildcard-enabled text to find class that matches element class.
+ * @param {string | HTMLElement} [options.element] - The parent element to search within.
+ * @param {string} [options.text] - Wildcard-enabled text to find within the elements.
+ * @param {string} [options.attr] - The name of an attribute to check.
+ * @param {string} [options.value] - Wildcard-enabled value for the attribute.
+ * @param {boolean} [options.all] - Whether to return all matches or just the first.
+ * @returns {HTMLElement | HTMLElement[] | null} - A single element, an array of elements, or null.
  */
-function checkURL(url) {
-    return document.location.href.includes(url);
-}
-
-/**
- * eventFire
- * function that will fire a given event on element. If css parameter given
- * is an element object it will not search for the element and fire on that
- * given object. If css parameter is css selector text it will then search
- * for the element. If text is given it will search for an element with the
- * the css selector that contains that text. If css_sib is given it will search
- * for a sibling of the original css selector that matches that css within the
- * parent node. If element is given it will do any of the searches within that
- * given element. The etype parameter can be a type such as click and will add
- * on to make 'onClick'. Otherwise will just fire a even to trigger events
- * assosiated with the element.
- *
- * @param css - Element Object or String CSS Selector
- * @param etype  - String of Event Type to fire
- * @param text - String of text to search for
- * @param css_sib - String CSS Selector to find in parent of css
- * @param element - Element Object to search within
- */
-function eventFire(css, etype, text="", css_sib="", element=false) {
-    var el;
-    if (typeof(css) == "string") {
-        if (css_sib !== "") {
-            el = findSibling(css, css_sib, text, element);
-        } else if (text !== "") {
-            el = findByText(css, text, element);
+const search = (css, options = {}) => {
+    const { id, eclass, text, attr, value, element, all } = options;
+    
+    let el = document;
+    if (element) {
+        if (typeof element == 'string') {
+            el = document.querySelector(element);
+            if (!el) {
+                return null;
+            }
         } else {
-            el = find(css, element);
+            if (!el) {
+                return null;
+            }
+            el = element;
         }
-    } else {
-        el = css;
     }
-    if (el.fireEvent) {
-        el.fireEvent('on' + etype);
-    } else {
-        var ev_obj = document.createEvent('Events');
-        ev_obj.initEvent(etype, true, false);
-        el.dispatchEvent(ev_obj);
+    
+    let els = Array.from(el.querySelectorAll(css));
+    // If text was provided.
+    if (text) {
+        els = els.filter(elem => wildcardIncludes(elem.innerText, text));
     }
-}
+    if (id) {
+        els = els.filter(elem => wildcardIncludes(elem.id, id));
+    }
+    if (eclass) {
+        els = els.filter(elem => wildcardIncludes(elem.className, '*' + eclass));
+    }
+    // If attribute and value was provided.
+    if (attr && value) {
+        els = els.filter(elem => {
+            let attrValue = elem.getAttribute(attr);
+            return attrValue !== null && wildcardIncludes(attrValue, value);
+        });
+    }
+    // return results of filters.
+    if (all) {
+        return els.length > 0 ? els : null;
+    }
+    return els.length > 0 ? els[0] : null;
+};
 
 /**
- * setField
+ * Searches the HTML DOM for the css selector and you can use options to help narrow
+ * down the options and returns that element. Then we remove that element from the HTML DOM.
+ * @param {string} css - css selector.
+ * @param {object} [options] - Optional settings to filter the results.
+ * @param {string | HTMLElement} [options.element] - The parent element to search within.
+ * @param {string} [options.text] - Wildcard-enabled text to find within the elements.
+ * @param {string} [options.attr] - The name of an attribute to check.
+ * @param {string} [options.value] - Wildcard-enabled value for the attribute.
+ * @param {boolean} [options.all] - Whether to return all matches or just the first.
+ */
+const remove = (css, options = {}) => {
+    const { text, attr, value, element, all } = options;
+    
+    var els;
+    if (typeof css == 'string') {
+        els = search(css, options);
+    } else {
+        els = css;
+    }
+    if (Array.isArray(els)) {
+        els.forEach(elem => elem.remove());
+    } else {
+        els.remove();
+    }
+};
+
+/**
+ * Will fire a given a event on element.
+ * @param {HTMLElement} node - HTMLElement to fire event on.
+ * @param {string} eType - The name of the event, e.g., 'click', 'change'.
+ * @param {object} [options] - Optional settings for the event to be fired. 
+ * @param {bool} [options.bubbles=true] - If the event bubbles through other events.
+ * @param {bool} [options.cancelable=true] - If the event can be canceled. 
+ */ 
+const eventFire = (node, eType, options = {}) => {
+    const { bubbles = true, cancelable = true } = options;
+    
+    if (node && !Array.isArray(node)) {
+        let event = new Event(eType, options);
+        node.dispatchEvent(event);
+    }
+};
+
+/**
  * function that will  update a field by either giving it text of by checking the box.
  * The etype is a string param that should either be 'input' for a text field or 'click'
- * for a check box. The text param is for if the element is a text field or check box, if
- * it's a check box it must be updated with true or false for the click state and text will
- * will be a string for the text wanting to be put in the textfield. If css param is a css
- * selector then it will search for the element using that selector. If text_search element
- * is a string it will try to find an element with that text in it. If css_sib is a css
- * selector it will search for a sibling of css that can be selected with css_sib. If
- * element is given an Element Object it will search within that Element to find the
- * element wanted.
- *
- * @param css - Element Object or String CSS Selector
- * @param etype - Either 'input' or 'click'
- * @param text - Either String or Boolean
- * @param text_search - String to search for
- * @param css_sib - String CSS Selector to find
- * @param element - Element Object to search in
+ * for a check box.
+ * @param {HTMLElement} node - HTMLElement to fire event on.
+ * @param {string} eType - event type to trigger.
+ * @param {string | bool} eText - either text for the input field or bool for a check box or click.
+ * @param {object} [options] - Optional settings for the event to be fired. 
+ * @param {bool} [options.bubbles=true] - If the event bubbles through other events.
+ * @param {bool} [options.cancelable=true] - If the event can be canceled. 
  */
-function setField(css, etype, text, text_search="", css_sib="", element=false) {
-    var el;
-    if (typeof(css) == "string") {
-        if (css_sib !== "") {
-            el = findSibling(css, css_sib, text_search, element);
-        } else if (text_search !== "") {
-            el = findByText(css, text_search, element);
+const setField = (node, eType, eText, options = {}) => {
+    const { bubbles = true, cancelable = true } = options;
+    
+    if (node && !Array.isArray(node)) {
+        if (eType == 'input') {
+            node.value = eText;
+        } else if (eType == 'click') {
+            node.checked = eText;
+        }
+        eventFire(node, eType, options);
+    }
+};
+
+/**
+ * function that will add html code to the DOM to the given element or css selector.
+ * If css given is a string will search for the element and you can give options
+ * to find the element you want to add HTML text to.
+ * @param {HTMLElement} node - HTMLElement that html will be added to. 
+ * @param {string} html_text - string of the HTML code you want to add to the DOM.
+ */
+const addHTML = (node, html_text) => {
+    
+    if (node && !Array.isArray(node)) {
+        node.insertAdjacentHTML('beforeend', html_text);
+    }
+};
+
+/**
+ * function that will create and add a tag element into the HTML DOM. The node
+ * must be an element object that the tag will be added to.
+ * Location is the add type.
+ * Location is 'append' will append element, 'prepend' will prepend the element.
+ * 'before' is insertBefore, and 'after' is insertAfter.
+ * @param {HTMLElement} node - Node the tag will be added to.
+ * @param {string} tag - Tag to be created.
+ * @param {object} [options] - Optional Settings.
+ * @param {string} [options.id] - ID of new element.
+ * @param {string} [options.eclass] - Class of new element.
+ * @param {string} [options.text] - inner text of the new element.
+ * @param {string} [options.style] - style of the new element.
+ * @param {string} [options.location] - type of add location. 
+ * @param {HTMLElement} [options.insertNode] - node for insert type.
+ * @param {string} [options.attr] - attribute type to add to element.
+ * @param {string} [options.value] - value of attribute.
+ * @return {HTMLElement} - returns the new element created. 
+ */
+const addTag = (node, tag, options = {}) => {
+    const { id, eclass, text, style, location, insertNode, attr, value } = options;
+    
+    if (node && !Array.isArray(node)) {
+        let element = document.createElement(tag);
+        if (id)
+            element.setAttribute('id', id);
+        if (eclass)
+            element.setAttribute('class', eclass);
+        if (text)
+            element.innerText = text;
+        if (style)
+            element.setAttribute('style', style);
+        if (attr && value) 
+            element.setAttribute(attr, value);
+        
+        if (!location || location == 'append') {
+            node.append(element);
+        } else if (location == 'prepend') {
+            node.prepend(element);
+        } else if (insertNode && location == 'before') {
+            node.insertBefore(element, node.childNodes[insertNode]);
+        } else if (insertNode && location == 'after') {
+            node.insertBefore(element, node.childNodes[insertNode].nextSibling);
+        }
+        return element;
+    }
+    return null;
+};
+
+/**
+ * function that will create and add a select dropdown to the HTML DOM with
+ * the given titles and values.
+ * Location is the add type.
+ * Location is 'append' will append element, 'prepend' will prepend the element.
+ * 'before' is insertBefore, and 'after' is insertAfter.
+ * @param {HTMLElement} node - Node the tag will be added to.
+ * @param {string[]} titles - Titles of the options for the select.
+ * @param {string[]} sValues - the values of the options for the select.
+ * @param {object} [options] - Optional Settings.
+ * @param {string} [options.id] - ID of new element.
+ * @param {string} [options.eclass] - Class of new element.
+ * @param {string} [options.text] - inner text of the new element.
+ * @param {string} [options.style] - style of the new element.
+ * @param {string} [options.location] - type of add location. 
+ * @param {HTMLElement} [options.insertNode] - node for insert type.
+ * @param {string} [options.attr] - attribute type to add to element.
+ * @param {string} [options.value] - value of attribute.
+ * @return {HTMLElement} - returns the new element created. 
+ */
+const addDropdown = (node, titles, sValues, options={}) => {
+    const { id, eclass, text, style, location, insertNode, attr, value } = options;
+    
+    if (node && !Array.isArray(node) && 
+        Array.isArray(titles) && Array.isArray(sValues) &&
+        titles.length == sValues.length) {
+        let eSelect = addTag(node, 'select', options);
+        for (let i = 0; i < sValues.length; i++) {
+            let opt = addTag(eSelect, 'options', {attr: 'value', value: sValues[i], text:titles[i]});
+        }
+        return eSelect;
+    }
+    return null;
+};
+
+const addTable = (node, rows, columns, options={}) => {
+    const { id, eclass, text, style, location, insertNode, attr, value, etype, efunc } = options;
+    
+    if (node && !Array.isArray(node) && 
+       Number.isInteger(rows) && Number.isInteger(columns)) {
+        
+        let trs = [];
+        let tds = [];
+        let table = addTag(node, 'table', options);
+        for (let y = 0; y < rows; y++) {
+            let tempTr = addTag(table, 'td');
+            for (let x = 0; x < columns; x++) {
+                tds.push(addTag(tempTr, 'td'));
+            }
+            trs.push(...tds);
+            tds = [];
+        }
+        return trs;
+    }
+};
+
+/**
+ * function that will add an attribute to the given element(s).
+ * @param {HTMLElement | HTMLElement[]} nodes - HTMLElement(s) that attribute will be added to.
+ * @param {string} attribute - attribute name to add.
+ * @param {string} value - Value of the new attribute.
+ */
+const addAttribute = (nodes, attr, value) => {
+    if (nodes) {
+        if (Array.isArray(nodes)) {
+            nodes.forEach(n => n.setAttribute(attr, value));
         } else {
-            el = find(css, element);
-        }
-    } else {
-        el = css;
-    }
-    if (etype == "input") {
-        el.value = text;
-    } else if (etype == "click") {
-        el.checked = text;
-    }
-    eventFire(el, etype);
-}
-
-/**
- * addHTML
- * function that adds text to the html at the given doc html location.
- *
- * @param css - String css selector
- * @param add_text - Text to add as innerHTML
- * @param search_text - Text to search for to find element
- * @param element - Searches in given element
- */
-function addHTML(css, add_text, search_text="", element=false) {
-    var input = find(css, element);
-    if (search_text != "") {
-        input = findByText(css, search_text, element);
-    }
-    input.innerHTML += add_text;
-}
-
-/**
- * createTagBefore
- * function that creates an element on the page at a given location and
- * appends that element then returns the created the element.
- *
- * @param loc - element to prepend to.
- * @param node - index of child nodes
- * @param tag - the tag of the element
- * @param id - id of new element
- * @param el_class - class of new element
- * @param text - the inner text of the new element
- */
-function createTagBefore(loc, node, tag, id='', el_class='', text='', style='') {
-    var element = document.createElement(tag);
-    if (id != '') {
-        element.setAttribute('id', id);
-    }
-    if (el_class != '') {
-        element.setAttribute('class', el_class);
-    }
-    if (text != '') {
-        element.innerText = text;
-    }
-    if (style != '') {
-        element.setAttribute('style', style);
-    }
-    loc.insertBefore(element, loc.childNodes[node]);
-    return element;
-}
-
-/**
- * createTagAppend
- * function that creates an element on the page at a given location and
- * appends that element then returns the created the element.
- *
- * @param loc - element to prepend to.
- * @param tag - the tag of the element
- * @param id - id of new element
- * @param el_class - class of new element
- * @param text - the inner text of the new element
- */
-function createTagAppend(loc, tag, id='', el_class='', text='', style='') {
-    var element = document.createElement(tag);
-    if (id != '') {
-        element.setAttribute('id', id);
-    }
-    if (el_class != '') {
-        element.setAttribute('class', el_class);
-    }
-    if (text != '') {
-        element.innerText = text;
-    }
-    if (style != '') {
-        element.setAttribute('style', style);
-    }
-    loc.append(element);
-    return element;
-}
-
-/**
- * createTag
- * function that creates an element on the page at a given location and
- * returns the created element.
- *
- * @param loc - element to prepend to.
- * @param tag - the tag of the element
- * @param id - id of new element
- * @param el_class - class of new element
- * @param text - the inner text of the new element
- */
-function createTag(loc, tag, id='', el_class='', text='', style='') {
-    var element = document.createElement(tag);
-    if (id != '') {
-        element.setAttribute('id', id);
-    }
-    if (el_class != '') {
-        element.setAttribute('class', el_class);
-    }
-    if (text != '') {
-        element.innerText = text;
-    }
-    if (style != '') {
-        element.setAttribute('style', style);
-    }
-    loc.prepend(element);
-    return element;
-}
-
-function addClass(loc, class_name) {
-    if (!loc.className.includes(class_name)) {
-        loc.className += ' ' + class_name;
-    }
-}
-
-function replaceClass(loc, original_class_name, new_class_name) {
-    if (loc.className.includes(original_class_name)) {
-        var old_class = loc.className;
-        loc.className = old_class.replaceAll(original_class_name, new_class_name);
-    }
-}
-
-function removeClass(loc, class_name) {
-    replaceClass(loc, class_name, '');
-}
-
-function itemInArray(item, array) {
-    for (var i = 0; i < array.length; i++) {
-        if (item == array[i]) {
-            return true;
+            nodes.setAttribute(attr, value);
         }
     }
-    return false;
-}
-/**
- * createDropdown
- * function that creates a select dropdown list given a location and list of
- * strings for the title of the options. The value and title will be the same
- * value. ID and el_class are for the class of the select element.
- *
- * @param loc - Element to prepend to.
- * @param items - the array of strings used for the list
- * @param id - id of the select element
- * @param el_class - the class of the select element
- */
-function createDropdown(loc, items, id='', el_class='') {
-    var text = '';
-    items.forEach(function(item) {
-        text += '<option value="' + item + '">' + item + '</option>';
-    });
-    var dropdown = createTag(loc, 'select', id, el_class);
-    dropdown.innerHTML = text;
-}
+};
 
 /**
- * runAngularTrigger
- * function that gets around scope issues with chrome extensions.
- * adds the script that needs to be run to trigger an angular trigger on the page.
- * then removes the code.
- *
- * @param css - css selector inside the angular.element call
- * @param trigger - the name of the trigger in .triggerHandler
+ * function that will replace an attributes value of to the given element(s).
+ * Uses the replace function to find the oldValue string and replace it with newValue string.
+ * @param {HTMLElement | HTMLElement[]} nodes - HTMLElement(s) that attribute will be replaced to.
+ * @param {string} eAttribute - attribute name to add.
+ * @param {string} oldValue - Wildcard-enabled Value that needs to be replaced. 
+ * @param {string} newValue - Value of the new attribute.
  */
-function runAngularTrigger(css, trigger) {
-    var code = "angular.element('" + css + "').triggerHandler('" + trigger + "');";
-    createTag(find('body'), 'script', 'angular', '', code).nodeType='text/javascript';
-    remove('#angular');
-}
-
-const sleep = (milliseconds) => {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
+const replaceAttribute = (nodes, attr, oldValue, newValue) => {
+    if (nodes) {
+        if (Array.isArray(nodes)) {
+            nodes.forEach(n => n.setAttribute(attr, n.getAttribute(attr).replace(oldValue, newValue)));
+        } else {
+            nodes.setAttribute(attr, n.getAttribute(attr).replace(oldValue, newValue));
+        }
+    }
 };
