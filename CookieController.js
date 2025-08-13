@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cookie Controller
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.0
 // @description  Creates and Controls Cookies
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
