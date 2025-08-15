@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Thread Controller
 // @namespace    http://tampermonkey.net/
-// @version      2.0.1
+// @version      2.1.0
 // @description  Creates and Controls Threads
 // @author       Ashcall3000
 // @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/Searcher.js
@@ -23,27 +23,49 @@ class ThreadController {
         this.cookieName = "ThreadController-" + threadName;
         this.Cookies = new CookieController(this.cookieName);
         this.myName = threadName;
-        this.threadList = [];               // Threads
-        this.threadNames = [];              // Names of Single Threads
-        const state = this.Cookies.get(`${this.cookieName}-State`) || { currentStep: 0, active: false };
-        this.tableThread = null;            // Table Thread
-        this.tableList = [];                // Table of Steps in a single thread
-        this.tableConditions = [];          // Conditions to run the table function
-        this.tableClick = [];               // Array of elements to click when funtion is done
-        this.tableStep = state.currentStep; // Table Number
-        this.active = state.active;         // If the Table is running
+        this.threads = {
+            list: [],                       // Intveral ID's
+            names: [],                      // Thread names
+            funcs: [],                      // Thread Functions
+            awake: []                       // Awake status
+        };
+        this.steps = {
+            thread: null,                   // The Set Interval for the steps
+            funcs: [],                      // Thread Functions
+            current: 0,                     // Current step running
+            active: false,                  // Steps active or not
+            amount: 0                       // Amount of steps
+        };
+        this._loadState();
+        // Create Thread that will start up the step process if it was 
+        // active or not.
+        if (this.steps.active) {
+            this._stepThreadStarter = setInterval(function() {
+                if (this.steps.amount > this.steps.current) {
+                    this.startSteps();
+                    clearInterval(this._stepThreadStarter);
+                }
+            }, 500);
+        }
     }
     
     /**
      * Private function that saves if the step thread is running and what step
      * it was running last. It saves this data to a cookie.
      */
-    _saveState() {
+    _saveState() {        
         const state = {
-            currentStep: this.tableStep,
-            active: this.active
+            threadNames: this.threads.names,
+            threadAwake: this.threads.awake,
+            stepCurrent: this.steps.current,
+            stepActive: this.steps.active
         };
         this.Cookies.add(`${this.cookieName}-State`, state, { days: 1});
+    }
+    
+    _loadState() {
+        const state = this.Cookies.get(`${this.cookieName}-State`) || { 
+            threadNames: [], threadAwake: [], stepCurrent: 0, stepActive: false };
     }
     
     /**
@@ -60,63 +82,59 @@ class ThreadController {
     /**
      * Private function that is used to run the step thread.
      */
-    _run() {
-        if (this.active && !this.has("TableStepThread")) {
-            this.add("TableStepThread", function() {
-                let index = this.tableStep;
-                if (this.tableConditions[index]()) {
-                    let nextStep = this.tableList[index]();
-                    if (nextStep || nextStep == null) {
-                        this.tableStep++;
-                        this._saveState();
-                        if (this.tableClick[index]) {
-                            this.tableClick[index].click();
-                        }
-                    }
+    _runSteps() {
+        if (!this.steps.thread) {
+            this.steps.active = true;
+            this.steps.thread = setInterval(function() {
+                let index = this.steps.current;
+                if (this.steps.amount > index && this.steps.funcs[index]()) {
+                    this.steps.current++;
                 }
-            });
+                if (this.steps.amount <= this.steps.current) {
+                    this.resetSteps();
+                }
+            }, 500);
         }
     }
     
     /**
-     * Adds a thread to the list with the given nam.
+     * Finds and returns the index of of a given thread name.
+     * @param {string} tname - thread name.
+     * @return {number} - index of thread name.
+     */
+    _findIndex(tname) {
+        return this.threads.names.findIndex(this._singleName(tname));
+    }
+    
+    /**
+     * Manualy runs the function from a specific thread.
+     * If the function doesn't return anything will return null.
+     * @param {string} - Thread name.
+     * @return {unknown} - What ever the function returns.
+     */
+    manualRun(tname) {
+        if (this.has(tname)) {
+            return this.threads.funcs[this._findIndex(tname)]();
+        }
+        return null;
+    }
+    
+    /**
+     * Adds a thread to the list with the given name.
      * @param {string} tname - Thread name used to refrence it.
      * @param {function} tfunc = The function the thread is goint to run.
+     * @param {boolean} awake - If the thread should start away or is awake.
      * @param {number} ttime - The amount of miliseconds before the thread runs again.
      */
-    add(tname, tfunc, ttime=1000) {
+    add(tname, tfunc, awake=true, ttime=1000) {
         if (!this.has(tname)) {
-            this.threadNames.push(this._singleName(tname));
-            this.threadList.push(setInterval(tfunc, ttime));
+            this.threads.names.push(this._singleName(tname));
+            this.threads.funcs.push(tfunc);
+            this.threads.awake.push(awake);
+            if (awake) {
+                this.threads.list.push(setInterval(tfunc, ttime));
+            }
         }
-    }
-    
-    /**
-     * Adds a step to the stepThread to run. 
-     * Condition is going to be the check to see if this step can be ran. Can
-     * be a string, boolean, or function. If it is a string it will search for
-     * an element to see if it exists.
-     * @param {boolean | string | function} condition - the check to see if the step can run
-     * @parm {function} tfunc - Function the step will run.
-     * #param {Element | string} - The element to be clicked after the step is done.
-     */
-    addStep(condition, tfunc, elClick=false) {
-        let startCondition = false;
-        if (typeof(condition) == 'string') {
-            startCondition = function() { return checkExist(condition); };
-        } else if (typeof(condition) == 'boolean') {
-            startCondition = function() { return condition; };
-        } else {
-            startCondition = condition;
-        }
-        
-        if (typeof(elClick) == 'string') {
-            elClick = find(elClick);
-        }
-        
-        this.tableList.push(tfunc);
-        this.tableConditions.push(startCondition);
-        this.tableClick.push(elClick);
     }
     
     /**
@@ -134,41 +152,82 @@ class ThreadController {
      */
     remove(tname) {
         if (this.has(tname)) {
-            let index = this.threadNames.findIndex(this._singleName(tname));
-            this.threadNames = this.threadNames.splice(index, 1);
-            clearInterval(this.threadList[index]);
-            this.threadList = this.threadList.splice(index, 1);
+            let index = this._findIndex(tname);
+            this.threads.names.splice(index, 1);
+            this.threads.funcs.splice(index, 1);
+            this.threads.awake.splice(index, 1);
+            clearInterval(this.threads.list[index]);
+            this.threads.list.splace(index, 1);
         }
+    }
+    
+    /**
+     * Puts a Thread to sleep. It will clear the interval and then
+     * you will have to use the wake function to create the interval
+     * again.
+     * @param {string} - tname - thread name.
+     */
+    sleep(tname) {
+        if (this.has(tname)) {
+            let index = this._findIndex(this._singleName(tname));
+            clearInterval(this.threads.list[index]);
+            this.threads.awake[index] = false;
+        }
+    }
+    
+    /** 
+     * Wakes up / re creates the interval for a thread.
+     * @param {string} tname - Thread name to wake up.
+     */
+    awake(tname) {
+        if (this.has(tname)) {
+            let index = this._findIndex(this._singleName(tname));
+            if (this.threads.awake[index]) {
+                clearInterval(this.threads.list[index]);
+                this.threads.awake[index] = false;
+            }
+        }
+    }
+    
+    /**
+     * Steps is a utility that stores a list of functions you define.
+     * That will those functions in the order that they were added 
+     * and not before. These functions are stores and ran in a single thread.
+     * This function MUST return TRUE for it to continue to the next function.
+     * @parm {function} tfunc - Function the step will run.
+     */
+    addStep(tfunc) {
+        this.steps.funcs.push(tfunc);
+        this.steps.amount++;
+    }
+    
+    /**
+     * Clears the thread for the steps interval.
+     * You will have to call startSteps() to have steps run again.
+     */
+    sleepSteps() {
+        clearInterval(this.steps.thread);
+        this.steps.active = false;
+        this._saveState();
     }
     
     /**
      * Starts the Step Thread
      */
-    start() {
-        if (this.tableList.length > 0) {
-            this.active = true;
-            this.tableStep = 0;
+    startSteps() {
+        if (this.steps.amount > 0) {
+            this._runSteps();
             this._saveState();
-            this._run();
         }
     }
     
     /**
-     * Stops the step thread from running until started again.
+     * Resets the Steps
      */
-    stop() {
-        this.active = false;
-        this.remove("TableStepThread");
-        this._saveState();
-    }
-    
-    /**
-     * Clears and resets the Steps
-     */
-    reset() {
-        this.active = false;
-        this.remove("TableStepThread");
-        this.tableStep = 0;
+    resetSteps() {
+        clearInterval(this.steps.thread);
+        this.steps.active = false;
+        this.steps.current = 0;
         this._saveState();
     }
 }
