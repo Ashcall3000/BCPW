@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Searcher
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Facilitates Searches of the HTML Document
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
@@ -115,14 +115,17 @@ const search = (css, options = {}) => {
  * down the options and returns that element. Then we remove that element from the HTML DOM.
  * @param {string} css - css selector.
  * @param {object} [options] - Optional settings to filter the results.
+ * @param {string} [options.id] - Wildcard-enabled text to find id that matches element id.
+ * @param {string} [options.eclass] - Wildcard-enabled text to find class that matches element class.
  * @param {string | HTMLElement} [options.element] - The parent element to search within.
  * @param {string} [options.text] - Wildcard-enabled text to find within the elements.
  * @param {string} [options.attr] - The name of an attribute to check.
  * @param {string} [options.value] - Wildcard-enabled value for the attribute.
  * @param {boolean} [options.all] - Whether to return all matches or just the first.
+ * @returns {HTMLElement | HTMLElement[] | null} - A single element, an array of elements, or null.
  */
 const remove = (css, options = {}) => {
-    const { text, attr, value, element, all } = options;
+    const { id, eclass, text, attr, value, element, all } = options;
     
     var els;
     if (typeof css == 'string') {
@@ -132,7 +135,7 @@ const remove = (css, options = {}) => {
     }
     if (Array.isArray(els)) {
         els.forEach(elem => elem.remove());
-    } else {
+    } else if (els) {
         els.remove();
     }
 };
@@ -306,7 +309,13 @@ const addTable = (node, rows, columns, options={}) => {
 const addAttribute = (nodes, attr, value) => {
     if (nodes) {
         if (Array.isArray(nodes)) {
-            nodes.forEach(n => n.setAttribute(attr, value));
+            nodes.forEach(function(n) {
+                if (n.getAttribute(attr)) {
+                    n.setAttribute(attr, n.getAttribute(attr) + ' ' + value);
+                } else {
+                    n.setAttribute(attr, value);
+                }
+            });
         } else {
             nodes.setAttribute(attr, value);
         }
@@ -326,7 +335,67 @@ const replaceAttribute = (nodes, attr, oldValue, newValue) => {
         if (Array.isArray(nodes)) {
             nodes.forEach(n => n.setAttribute(attr, n.getAttribute(attr).replace(oldValue, newValue)));
         } else {
-            nodes.setAttribute(attr, n.getAttribute(attr).replace(oldValue, newValue));
+            nodes.setAttribute(attr, nodes.getAttribute(attr).replace(oldValue, newValue));
         }
     }
+};
+
+/**
+ * function that adds a class to a given HTML Element.
+ * @param {HTMLElement | HTMLElement[]} nodes - HTMLElement(s) that attribute will be added to.
+ * @param {string} value - class name to add.
+ */
+const addClass = (nodes, value) => {
+    if (nodes) {
+        if (Array.isArray(nodes)) {
+            nodes.forEach(function(n) {
+                if (!n.className.includes(value)) {
+                    if (n.classList.length > 0) {
+                        n.className += ' ' + value;
+                    } else {
+                        n.className = value;
+                    }
+                }
+            });
+        } else {
+            if (!nodes.className.includes(value)) {
+                if (nodes.classList.length > 0) {
+                    nodes.className += ' ' + value;
+                } else {
+                    nodes.className = value;
+                }
+            }
+        }
+    }
+};
+
+/**
+ * function the replaces a given class with a new one.
+ * @param {HTMLElement | HTMLElement[]} nodes - HTMLElement(s) that class will be replaced to.
+ * @param {string} oldValue - class name to be replaced. 
+ * @param {string} newValue - new class name.
+ */
+const replaceClass = (nodes, oldValue, newValue) => {
+    if (nodes) {
+        if (Array.isArray(nodes)) {
+            nodes.forEach(function(n) {
+                if (n.className.includes(oldValue)) {
+                    n.className = n.className.replaceAll(oldValue, newValue);
+                }
+            });
+        } else {
+            if (nodes.className.includes(oldValue)) {
+                nodes.className = nodes.className.replaceAll(oldValue, newValue);
+            }
+        }
+    }
+};
+
+/**
+ * function the removes a given class from HTML Element.
+ * @param {HTMLElement | HTMLElement[]} nodes - HTMLElement(s) that class will be replaced to.
+ * @param {string} value - class name to be removed.
+ */
+const removeClass = (nodes, value) => {
+    replaceClass(nodes, value, '');
 };
