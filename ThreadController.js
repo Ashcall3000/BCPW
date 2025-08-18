@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Thread Controller
 // @namespace    http://tampermonkey.net/
-// @version      2.1.1
+// @version      2.1.3
 // @description  Creates and Controls Threads
 // @author       Ashcall3000
 // @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/Searcher.js
@@ -103,7 +103,7 @@ class ThreadController {
      * @return {number} - index of thread name.
      */
     _findIndex(tname) {
-        return this.threads.names.findIndex(this._singleName(tname));
+        return this.threads.names.indexOf(this._singleName(tname));
     }
     
     /**
@@ -157,7 +157,7 @@ class ThreadController {
             this.threads.funcs.splice(index, 1);
             this.threads.awake.splice(index, 1);
             clearInterval(this.threads.list[index]);
-            this.threads.list.splace(index, 1);
+            this.threads.list.splice(index, 1);
         }
     }
     
