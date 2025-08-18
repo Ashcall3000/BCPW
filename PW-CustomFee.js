@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PW-CustomFee
 // @namespace    http://tampermonkey.net/
-// @version      0.0.3
+// @version      0.0.4
 // @description  Used for Accela to show Fee Unit costs per quantity amount
 // @author       Christopher Sullivan
 // @match        https://butteco-test-av.accela.com/*
@@ -23,8 +23,9 @@
         let inner = exists('#iframe-page-container');
         if (inner) {
             Threads.remove('inner-window');
+            return;
         }
-        if (!inner && !exists('input', {id:'fee-*'})) {
+        if (exists('input', {attr:'name', value:'*FormulaName*'}) && !exists('input', {id:'fee-*'})) {
             let feeRows = search('tr', {element:'#AccelaMainTable', id:'row*', all:true});
             for (let i = 0; i < feeRows.length; i++) {
                 let td = search('td', {element:feeRows[i], all:true})[3];
@@ -36,7 +37,7 @@
                     style: 'height: 19px; width: 4em; background-color:#f5f6f5'
                 });
                 addAttribute(input, 'type', 'text');
-                input.addEventListener('change', EventChange);
+                //input.addEventListener('change', EventChange);
                 input.value = '$' + search('input', {attr:'name', value:'*FormulaName,' + i + ')'}).value;
                 input.disabled = true;
             }
