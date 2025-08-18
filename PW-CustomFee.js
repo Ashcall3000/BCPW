@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         PW-CustomFee
 // @namespace    http://tampermonkey.net/
-// @version      0.0.2
+// @version      0.0.3
 // @description  Used for Accela to show Fee Unit costs per quantity amount
 // @author       Christopher Sullivan
 // @match        https://butteco-test-av.accela.com/*
+// @match        https://butteco-prod-av.accela.com/*
 // @require      https://github.com/Ashcall3000/BCPW/raw/refs/heads/main/Searcher.js
 // @require      https://github.com/Ashcall3000/BCPW/raw/refs/heads/main/ThreadController.js
 // @require      https://github.com/Ashcall3000/BCPW/raw/refs/heads/main/CookieController.js
