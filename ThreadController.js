@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Thread Controller
 // @namespace    http://tampermonkey.net/
-// @version      2.1.0
+// @version      2.1.1
 // @description  Creates and Controls Threads
 // @author       Ashcall3000
 // @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/Searcher.js
@@ -143,7 +143,7 @@ class ThreadController {
      * @return {boolean} - Weather the thread name exists or not.
      */
     has(tname) {
-        return this.threadNames.includes(this._singleName(tname));
+        return this.threads.names.includes(this._singleName(tname));
     }
     
     /**
