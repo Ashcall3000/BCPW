@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Searcher
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Facilitates Searches of the HTML Document
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
@@ -272,13 +272,29 @@ const addDropdown = (node, titles, sValues, options={}) => {
         titles.length == sValues.length) {
         let eSelect = addTag(node, 'select', options);
         for (let i = 0; i < sValues.length; i++) {
-            let opt = addTag(eSelect, 'options', {attr: 'value', value: sValues[i], text:titles[i]});
+            let opt = addTag(eSelect, 'option', {attr: 'value', value: sValues[i], text:titles[i]});
         }
         return eSelect;
     }
     return null;
 };
 
+/**
+ * function that adds a table at a specific location then returns
+ * the Table rows that were created.
+ * @param {HTMLElement} node - HTMLElement to create table in.
+ * @param {Number} rows - How many Rows are in the table.
+ * @param {Number} columns = How many columns in the table.
+ * @param [object] - Options settings for Table.
+ * @param {string} [options.id] - ID of new element.
+ * @param {string} [options.eclass] - Class of new element.
+ * @param {string} [options.text] - inner text of the new element.
+ * @param {string} [options.style] - style of the new element.
+ * @param {string} [options.location] - type of add location. 
+ * @param {HTMLElement} [options.insertNode] - node for insert type.
+ * @param {string} [options.attr] - attribute type to add to element.
+ * @param {string} [options.value] - value of attribute.
+ */
 const addTable = (node, rows, columns, options={}) => {
     const { id, eclass, text, style, location, insertNode, attr, value, etype, efunc } = options;
     
@@ -286,15 +302,13 @@ const addTable = (node, rows, columns, options={}) => {
        Number.isInteger(rows) && Number.isInteger(columns)) {
         
         let trs = [];
-        let tds = [];
         let table = addTag(node, 'table', options);
         for (let y = 0; y < rows; y++) {
-            let tempTr = addTag(table, 'td');
+            trs.push([]);
+            let tempTr = addTag(table, 'tr');
             for (let x = 0; x < columns; x++) {
-                tds.push(addTag(tempTr, 'td'));
+                trs[y].push(addTag(tempTr, 'td'));
             }
-            trs.push(...tds);
-            tds = [];
         }
         return trs;
     }
