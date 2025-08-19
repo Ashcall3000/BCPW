@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cookie Controller
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Creates and Controls Cookies
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
@@ -178,7 +178,7 @@ class CookieController {
      */
     reset() {
         for (let i = 0; i < this.cookies.length; i++) {
-            this._set(this.cookies[i], '', { ...options, days: -1 });
+            this._set(this.cookies[i], '', {days: -1 });
         }
         this.cookies = [];
         this._save();
