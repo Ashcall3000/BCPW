@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Searcher
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Facilitates Searches of the HTML Document
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
@@ -210,8 +210,8 @@ const addHTML = (node, html_text) => {
  * @param {string} [options.style] - style of the new element.
  * @param {string} [options.location] - type of add location. 
  * @param {HTMLElement} [options.insertNode] - node for insert type.
- * @param {string} [options.attr] - attribute type to add to element.
- * @param {string} [options.value] - value of attribute.
+ * @param {Array | string} [options.attr] - attribute type to add to element.
+ * @param {Array | string} [options.value] - value of attribute.
  * @return {HTMLElement} - returns the new element created. 
  */
 const addTag = (node, tag, options = {}) => {
@@ -227,8 +227,14 @@ const addTag = (node, tag, options = {}) => {
             element.innerText = text;
         if (style)
             element.setAttribute('style', style);
-        if (attr && value) 
+        if (Array.isArray(attr) && Array.isArray(value) &&
+           attr.length == value.length) {
+            for (let i = 0; i < attr.length; i++) {
+                element.setAttribute(attr[i], value[i]);
+            }
+        } else if (attr && value) {
             element.setAttribute(attr, value);
+        }
         
         if (!location || location == 'append') {
             node.append(element);
@@ -303,9 +309,10 @@ const addTable = (node, rows, columns, options={}) => {
         
         let trs = [];
         let table = addTag(node, 'table', options);
+        let tbody = addTag(table, 'tbody');
         for (let y = 0; y < rows; y++) {
             trs.push([]);
-            let tempTr = addTag(table, 'tr');
+            let tempTr = addTag(tbody, 'tr');
             for (let x = 0; x < columns; x++) {
                 trs[y].push(addTag(tempTr, 'td'));
             }
