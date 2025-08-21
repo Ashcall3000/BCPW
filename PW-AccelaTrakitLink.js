@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PW-AccelaTrakitLink
 // @namespace    http://tampermonkey.net/
-// @version      0.0.1
+// @version      0.0.2
 // @description  Used to add a button on summary page to open the corresponding Trakit page.
 // @author       Christopher Sullivan
 // @match        https://butteco-test-av.accela.com/*
@@ -23,7 +23,8 @@
             Threads.remove('inner-window');
             return;
         }
-        if (exists('#menu_bar_') && exists('#capTabSummary') && !exists('#trakit-button')) {
+        if (exists('#menu_bar_') && exists('#capTabSummary') && !exists('#trakit-button') && 
+            exists('li', {id:'CapTabSummary', eclass:'tabSelected'})) {
             // find Permit number
             let tr = search('tr', {element: '#menu_Bar'});
             let td = addTag(tr, 'td', {style: 'padding-left:5px;padding-right:5px;'});
