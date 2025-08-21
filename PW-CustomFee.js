@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PW-CustomFee
 // @namespace    http://tampermonkey.net/
-// @version      0.0.4
+// @version      0.0.5
 // @description  Used for Accela to show Fee Unit costs per quantity amount
 // @author       Christopher Sullivan
 // @match        https://butteco-test-av.accela.com/*
@@ -28,18 +28,21 @@
         if (exists('input', {attr:'name', value:'*FormulaName*'}) && !exists('input', {id:'fee-*'})) {
             let feeRows = search('tr', {element:'#AccelaMainTable', id:'row*', all:true});
             for (let i = 0; i < feeRows.length; i++) {
-                let td = search('td', {element:feeRows[i], all:true})[3];
-                let input = addTag(td, 'input', {
-                    id: 'fee-' + i,
-                    eclass: 'portlet-form-input-field',
-                    attr: 'title',
-                    value: 'FeeCost',
-                    style: 'height: 19px; width: 4em; background-color:#f5f6f5'
-                });
-                addAttribute(input, 'type', 'text');
-                //input.addEventListener('change', EventChange);
-                input.value = '$' + search('input', {attr:'name', value:'*FormulaName,' + i + ')'}).value;
-                input.disabled = true;
+                let inputValue = search('input', {attr:'name', value:'*FormulaName,' + i + ')'}).value;
+                if (inputValue.length < 10) {
+                    let td = search('td', {element:feeRows[i], all:true})[3];
+                    let input = addTag(td, 'input', {
+                        id: 'fee-' + i,
+                        eclass: 'portlet-form-input-field',
+                        attr: 'title',
+                        value: 'FeeCost',
+                        style: 'height: 19px; width: 6em; background-color:#f5f6f5'
+                    });
+                    addAttribute(input, 'type', 'text');
+                    //input.addEventListener('change', EventChange);
+                    input.value = '$' + inputValue;
+                    input.disabled = true;
+                }
             }
         }
     });
