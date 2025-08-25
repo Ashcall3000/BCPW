@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Thread Controller
 // @namespace    http://tampermonkey.net/
-// @version      2.1.3
+// @version      2.1.4
 // @description  Creates and Controls Threads
 // @author       Ashcall3000
 // @require      https://raw.githubusercontent.com/Ashcall3000/BCPW/refs/heads/main/Searcher.js
@@ -134,6 +134,7 @@ class ThreadController {
             if (awake) {
                 this.threads.list.push(setInterval(tfunc, ttime));
             }
+            this._saveState();
         }
     }
     
@@ -158,6 +159,7 @@ class ThreadController {
             this.threads.awake.splice(index, 1);
             clearInterval(this.threads.list[index]);
             this.threads.list.splice(index, 1);
+            this._saveState();
         }
     }
     
@@ -172,6 +174,7 @@ class ThreadController {
             let index = this._findIndex(this._singleName(tname));
             clearInterval(this.threads.list[index]);
             this.threads.awake[index] = false;
+            this._saveState();
         }
     }
     
@@ -186,6 +189,7 @@ class ThreadController {
                 clearInterval(this.threads.list[index]);
                 this.threads.awake[index] = false;
             }
+            this._saveState();
         }
     }
     
@@ -199,6 +203,7 @@ class ThreadController {
     addStep(tfunc) {
         this.steps.funcs.push(tfunc);
         this.steps.amount++;
+        this._saveState();
     }
     
     /**
