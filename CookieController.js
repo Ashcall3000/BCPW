@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Cookie Controller
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.3
 // @description  Creates and Controls Cookies
 // @author       Ashcall3000
 // @match        https://butteco-test-av.accela.com/*
@@ -18,6 +18,7 @@ class CookieController {
             throw new Error("CookieController require a unique name.");
         
         this.cookieName = "CookieController-" + controllerName;
+        this.cookies = [];
         this._load();
         if (this.cookies == null)
             this.cookies = [];
@@ -146,6 +147,8 @@ class CookieController {
             if (c.indexOf(nameEQ) === 0) {
                 const value = c.substring(nameEQ.length, c.length);
                 try {
+                    if (!this.has(name))
+                        this.cookies.push(name);
                     return JSON.parse(decodeURIComponent(value));
                 } catch (e) {
                     // If parsing fails, return the raw value
