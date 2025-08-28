@@ -43,7 +43,7 @@
         addTag(td, 'label', {text:'Impact Fee - Drainage - '});
         addDropdown(td, 
                     ['--Location--', 'Butte Creek', 'Comanche Creek', 'Little Chico Creek', 'Big Chico Creek', 'Lindo Channel', 'SUDA Ditch', 'Mud-Sycamore Creek', 'PV Ditch'], 
-                    ['none', 'Butte', 'Comanche', 'Little', 'Big', 'Lindo', 'S.U.D.A.D.', 'Sycamore', 'P.V.'], 
+                    ['none', 'Butte', 'Comanche', 'Little', 'Big', 'Lindo', 'S.U.D.A.D', 'Sycamore', 'P.V.'], 
                     {id: 'feeMyLocation', eclass: 'portlet-form-field'}
                    ).addEventListener('change', changeFees);
         addDropdown(td,
@@ -121,9 +121,9 @@
         LindoSingle: '9194',
         LindoMultiple: '13791',
         LindoCommercial: '14710',
-        'S.U.D.A.D.Single': '8019',
-        'S.U.D.A.D.Multiple': '12029',
-        'S.U.D.A.D.Commercial': '12830',
+        'S.U.D.A.DSingle': '8019',
+        'S.U.D.A.DMultiple': '12029',
+        'S.U.D.A.DCommercial': '12830',
         SycamoreSingle: '6978',
         SycamoreMultiple: '10468',
         SycamoreCommercial: '11165',
